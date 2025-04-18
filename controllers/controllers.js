@@ -81,50 +81,55 @@ export async function handleUpload(req, res) {
 
   try {
     if (!req.file) {
-        return res.render("home", {
-            result: null,
-            error: "No file uploaded",
-            preview: null,
-            remedies: null
-          });
+      return res.render("home", {
+        result: null,
+        error: "No file uploaded",
+        preview: null,
+        remedies: null,
+      });
     }
 
-    // 1) Read the raw upload
-    const rawBuffer = fs.readFileSync(req.file.path);
+    // Read the raw image buffer
+    let rawBuffer = fs.readFileSync(req.file.path);
+    const originalSize = rawBuffer.length;
 
-    // 2) Create a base64 data‑URI for the preview
+    // 🔻 Compress image if it's over 1MB (especially useful for mobile)
+    if (originalSize > 1024 * 1024) {
+      rawBuffer = await sharp(rawBuffer)
+        .jpeg({ quality: 70 }) // You can tweak quality here
+        .toBuffer();
+    }
+
+    // Preview data URI
     preview = `data:${req.file.mimetype};base64,${rawBuffer.toString("base64")}`;
 
-    // 3) Convert if needed and run inference
+    // Prepare image for Hugging Face
     const { buffer: imageBuffer, mimeType } = await prepareImage(rawBuffer, req.file.mimetype);
     const result = await query(imageBuffer, mimeType);
 
-    // 4) Format the label for display and get remedies
+    // Get remedies if a condition was detected
     let remedies = null;
     if (result) {
       result.formattedLabel = result.label.replace(/_/g, " ").replace(/___/g, " - ");
       remedies = await getRemedies(result.formattedLabel);
     }
 
-    // 5) Render with both result and preview
+    // Render response
     res.render("home", {
-        result,
-        error: null,
-        preview: `data:${mimeType};base64,${imageBuffer.toString("base64")}`,
-        remedies
-      });
-      
-
+      result,
+      error: null,
+      preview: `data:${mimeType};base64,${imageBuffer.toString("base64")}`,
+      remedies,
+    });
 
   } catch (error) {
     res.render("home", {
-        result: null,
-        error: "Error processing image: " + error.message,
-        preview: null,
-        remedies: null
-      });      
+      result: null,
+      error: "Error processing image: " + error.message,
+      preview: null,
+      remedies: null,
+    });
   } finally {
-    // 6) Cleanup upload
     if (req.file && fs.existsSync(req.file.path)) {
       fs.unlinkSync(req.file.path);
     }

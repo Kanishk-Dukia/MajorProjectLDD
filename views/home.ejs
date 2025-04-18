@@ -24,7 +24,7 @@
         <section class="upload-box">
             <form action="/upload" method="post" enctype="multipart/form-data">
                 <h2>Upload a Plant Image</h2>
-                <input type="file" name="image" id="image" accept="image/*" capture="environment" onchange="previewImage(this)" required />
+                <input type="file" name="image" id="image" accept="image/*"  onchange="previewImage(this)" required />
                 <div class="preview-wrap">
                     <!-- if `preview` was passed, show it; otherwise the JS previewImage() still works before submit -->
                     <img id="preview" src="<%= preview || '' %>" class="<%= preview ? 'visible' : '' %>"

@@ -1,0 +1,90 @@
+<!-- views/home.ejs -->
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GreenLeaf | Plant Disease Detector</title>
+    <link rel="stylesheet" href="/stylesheet.css" />
+</head>
+
+<body>
+    <header class="site-header">
+        <div class="brand">
+            <img src="/assests/1.svg" alt="GreenLeaf Logo" class="logo" />
+            <h1>GreenLeaf</h1>
+        </div>
+        <div class="theme-toggle">
+            <input type="checkbox" id="theme-switch" /><label for="theme-switch">🌙</label>
+        </div>
+    </header>
+
+    <main class="container">
+        <section class="upload-box">
+            <form action="/upload" method="post" enctype="multipart/form-data">
+                <h2>Upload a Plant Image</h2>
+                <input type="file" name="image" id="image" accept="image/*" capture="environment" onchange="previewImage(this)" required />
+                <div class="preview-wrap">
+                    <!-- if `preview` was passed, show it; otherwise the JS previewImage() still works before submit -->
+                    <img id="preview" src="<%= preview || '' %>" class="<%= preview ? 'visible' : '' %>"
+                        alt="Preview" />
+                </div>
+                <button type="submit" class="btn">Analyze Image</button>
+            </form>
+        </section>
+
+        <% if (error) { %>
+            <div class="message error">
+                <%= error %>
+            </div>
+            <% } %>
+
+                <% if (result) { %>
+                    <section class="result">
+                        <h2>Analysis Result</h2>
+                        <p><strong>Detected Condition:</strong>
+                            <%= result.formattedLabel %>
+                        </p>
+                        <p><strong>Confidence:</strong> <span>
+                                <%= (result.score * 100).toFixed(2) %>%
+                            </span></p>
+                    </section>
+                    <% } %>
+
+                    <% if (remedies) { %>
+                        <div class="remedy-box">
+                          <h2>Remedies for <%= result.formattedLabel %></h2>
+                          <div class="remedy-scroll">
+                            <%- remedies %>
+                          </div>
+                        </div>
+                      <% } %>
+                       
+    </main>
+
+    <script>
+        function previewImage(input) {
+            const preview = document.getElementById('preview');
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = e => {
+                    preview.src = e.target.result;
+                    preview.classList.add('visible');
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+        const toggle = document.getElementById('theme-switch');
+        toggle.addEventListener('change', () => {
+            document.documentElement.classList.toggle('dark');
+            localStorage.setItem('theme', document.documentElement.classList.contains('dark') ? 'dark' : 'light');
+        });
+        if (localStorage.getItem('theme') === 'dark') {
+            document.documentElement.classList.add('dark');
+            toggle.checked = true;
+        }
+    </script>
+</body>
+
+</html>

@@ -109,15 +109,17 @@ export async function handleUpload(req, res) {
     // console.log(results);
 
     // Get remedies if a condition was detected
-    let remedies = null;
+    let remedies = "INVALID INPUT";
     if (results && results.length > 0) {
       // Format labels for all
       results.forEach(r => {
         r.formattedLabel = r.label.replace(/_/g, " ").replace(/___/g, " - ");
       });
 
-      // Get remedies only for top prediction
-      remedies = await getRemedies(results[0].formattedLabel);
+      if(results[0].label !== "Invalid") {
+        // Get remedies only for top prediction
+        remedies = await getRemedies(results[0].formattedLabel);
+      }
     }
 
 

@@ -114,15 +114,17 @@
                     <% } %>
                       
 
-                <% if (remedies) { %>
-                            <div class="remedy-box">
-                                <h2>Remedies for <%= result.formattedLabel %>
-                                </h2>
-                                <div class="remedy-scroll">
-                                    <%- remedies %>
-                                </div>
-                            </div>
-                    <% } %>
+                    <% if (remedies) { %>
+                      <div class="remedy-box">
+                          <% if (result.formattedLabel !== "Invalid") { %>
+                              <h2>Remedies for <%= result.formattedLabel %></h2>
+                          <% } %>
+                          <div class="remedy-scroll">
+                              <%- remedies %>
+                          </div>
+                      </div>
+                  <% } %>
+                  
 
     </main>
 

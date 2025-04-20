@@ -127,6 +127,18 @@
     color: var(--error-fg);
   }
 
+  .chart-container {
+    width: 100%;
+    max-width: 600px;
+    margin: 2rem auto;
+    background: var(--bg-color);
+    color: var(--fg-color);
+    padding: 2rem;
+    border-radius: 8px;
+    text-align: left;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+  }
+
   .remedy-box {
     background: var(--bg-color);
     color: var(--fg-color);

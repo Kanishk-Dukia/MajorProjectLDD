@@ -21,18 +21,30 @@
     </header>
 
     <main class="container">
+        <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 2rem; align-items: flex-start;">
+          <div>
         <section class="upload-box">
             <form action="/upload" method="post" enctype="multipart/form-data">
                 <h2>Upload a Plant Image</h2>
-                <input type="file" name="image" id="image" accept="image/*"  onchange="previewImage(this)" required />
+                <input type="file" name="image" id="image" accept="image/*" onchange="previewImage(this)" required />
                 <div class="preview-wrap">
                     <!-- if `preview` was passed, show it; otherwise the JS previewImage() still works before submit -->
                     <img id="preview" src="<%= preview || '' %>" class="<%= preview ? 'visible' : '' %>"
                         alt="Preview" />
                 </div>
                 <button type="submit" class="btn">Analyze Image</button>
-            </form>
+            </form> 
         </section>
+
+    </div>
+    
+        <% if (rawResults && rawResults.length > 0) { %>
+          <div class="chart-container">
+            <canvas id="bellChart"></canvas>
+          </div>
+        <% } %>
+      </div>
+    
 
         <% if (error) { %>
             <div class="message error">
@@ -52,15 +64,66 @@
                     </section>
                     <% } %>
 
-                    <% if (remedies) { %>
-                        <div class="remedy-box">
-                          <h2>Remedies for <%= result.formattedLabel %></h2>
-                          <div class="remedy-scroll">
-                            <%- remedies %>
-                          </div>
-                        </div>
-                      <% } %>
-                       
+                <% if (rawResults && rawResults.length > 0) { %>
+                        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+                        <script>
+                          const chartLabels = <%- JSON.stringify(rawResults.map(r => r.formattedLabel)) %>;
+                          const chartScores = <%- JSON.stringify(rawResults.map(r => (r.score * 100).toFixed(2))) %>;
+                      
+                          const ctx = document.getElementById('bellChart').getContext('2d');
+                          new Chart(ctx, {
+                            type: 'line',
+                            data: {
+                              labels: chartLabels,
+                              datasets: [{
+                                label: 'Confidence (%)',
+                                data: chartScores,
+                                borderColor: '#4CAF50',
+                                backgroundColor: 'rgba(76, 175, 80, 0.2)',
+                                tension: 0.4,
+                                fill: true,
+                                pointRadius: 5,
+                                pointBackgroundColor: '#388E3C'
+                              }]
+                            },
+                            options: {
+                              responsive: true,
+                              scales: {
+                                y: {
+                                  beginAtZero: true,
+                                  max: 100,
+                                  title: {
+                                    display: true,
+                                    text: 'Confidence %'
+                                  }
+                                }
+                              },
+                              plugins: {
+                                legend: {
+                                  display: false
+                                },
+                                tooltip: {
+                                  callbacks: {
+                                    label: ctx => `${ctx.parsed.y}% confidence`
+                                  }
+                                }
+                              }
+                            }
+                          });
+                        </script>
+                    <% } %>
+                      
+
+                <% if (remedies) { %>
+                            <div class="remedy-box">
+                                <h2>Remedies for <%= result.formattedLabel %>
+                                </h2>
+                                <div class="remedy-scroll">
+                                    <%- remedies %>
+                                </div>
+                            </div>
+                    <% } %>
+
     </main>
 
     <script>

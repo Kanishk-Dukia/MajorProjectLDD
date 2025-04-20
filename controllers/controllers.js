@@ -18,7 +18,7 @@ async function getRemedies(diseaseName) {
       model: "gemini-2.0-flash", // Specify the correct model name
       contents: `Give me 5 simple and effective remedies for the plant disease called "${diseaseName}". Format the response as a numbered list with brief explanations for each remedy.`
     });
-    
+
     const text = response.text; // Return the response text from the model
 
     const htmlRemedies = marked.parse(text); // ⬅️ Converts markdown to HTML
@@ -49,7 +49,7 @@ async function prepareImage(buffer, mimeType) {
 
 async function query(imageBuffer, mimeType) {
   const response = await fetch(
-    "https://api-inference.huggingface.co/models/marwaALzaabi/plant-disease-detection-vit",
+    "https://router.huggingface.co/hf-inference/models/wambugu71/crop_leaf_diseases_vit",
     {
       headers: {
         Authorization: `Bearer ${HF_TOKEN}`,
@@ -69,7 +69,7 @@ async function query(imageBuffer, mimeType) {
   const text = await response.text();
   try {
     const result = JSON.parse(text);
-    return result.length > 0 ? result[0] : null;
+    return result.length > 0 ? result : null;
   } catch (err) {
     console.error("❌ Hugging Face Error Response:\n", text);
     throw err;
@@ -105,18 +105,26 @@ export async function handleUpload(req, res) {
 
     // Prepare image for Hugging Face
     const { buffer: imageBuffer, mimeType } = await prepareImage(rawBuffer, req.file.mimetype);
-    const result = await query(imageBuffer, mimeType);
+    const results = await query(imageBuffer, mimeType);
+    // console.log(results);
 
     // Get remedies if a condition was detected
     let remedies = null;
-    if (result) {
-      result.formattedLabel = result.label.replace(/_/g, " ").replace(/___/g, " - ");
-      remedies = await getRemedies(result.formattedLabel);
+    if (results && results.length > 0) {
+      // Format labels for all
+      results.forEach(r => {
+        r.formattedLabel = r.label.replace(/_/g, " ").replace(/___/g, " - ");
+      });
+
+      // Get remedies only for top prediction
+      remedies = await getRemedies(results[0].formattedLabel);
     }
+
 
     // Render response
     res.render("home", {
-      result,
+      result: results[0],
+      rawResults: results,        // full array for graph
       error: null,
       preview: `data:${mimeType};base64,${imageBuffer.toString("base64")}`,
       remedies,
@@ -125,6 +133,7 @@ export async function handleUpload(req, res) {
   } catch (error) {
     res.render("home", {
       result: null,
+      rawResults: null,
       error: "Error processing image: " + error.message,
       preview: null,
       remedies: null,
